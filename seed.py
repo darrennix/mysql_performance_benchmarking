@@ -1,0 +1,165 @@
+#!/usr/bin/python3
+
+import pymysql
+import math
+import random
+import datetime
+import time
+import threading
+
+from faker import Faker
+from faker.providers import company
+from faker.providers import job
+
+
+def start():
+	db = pymysql.connect("localhost","root","","dradisdb" )
+	cursor = db.cursor()
+
+	print("Employer rows:")
+	cursor.execute("SELECT count(employer_id)  FROM employer")
+	data = cursor.fetchone()
+	print (data)
+
+
+	print("Job rows:")
+	cursor.execute("SELECT count(job_id)  FROM job")
+	data = cursor.fetchone()
+	print (data)
+
+	print("Application rows:")
+	cursor.execute("SELECT count(application_id) FROM application")
+	data = cursor.fetchone()
+	print (data)
+
+	# disconnect from server
+	db.close()
+
+
+	table = input("Which table do you want to seed (employer, job, application): ")
+	if table not in ["employer", "job", "application"]:
+		print("Invalid input")
+		exit()
+	print(table)
+
+	parent_id = input("Do you want to seed all records for one employer or job ID? Enter parent ID or leave blank: ")
+	if parent_id != "":
+		parent_id = int(parent_id)
+	else:
+		parent_id = None
+	print(parent_id)
+
+	limit = input("How many records to insert (default 10K): ")
+	if limit != "":
+		limit = int(limit)
+	else:
+		limit = 10000
+	print(limit)
+
+
+	start_time = time.time()
+	threads = []
+
+	if(table == "employer"):
+		loops = int(math.ceil(limit / 1000))
+		for loop in range(0, loops):
+			t = threading.Thread(target=employer_thread)
+			t.start()
+			threads.append(t)
+
+	elif(table == "job"):
+		loops = int(math.ceil(limit / 1000))
+		for loop in range(0, loops):
+			threading.Thread(target=job_thread, args=(parent_id)).start()
+
+
+	elif(table == "application"):
+		application(parent_id, limit)
+
+
+	for t in threads:
+	  t.join() # Wait until thread terminates its task
+
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+def employer_thread():
+	fake = Faker()
+	db = pymysql.connect("localhost","root","","dradisdb" )
+	cursor = db.cursor()
+
+	sql = """
+		INSERT INTO employer (name) VALUES (%s)
+	"""
+
+	values = []
+	for i in range(0, 1000):
+		values.append((fake.company()))
+
+	cursor.executemany(sql, values)
+	db.commit()
+	db.close()
+
+
+def job_thread(parent_id):
+	fake = Faker()
+	db = pymysql.connect("localhost","root","","dradisdb" )
+	cursor = db.cursor()
+
+	statuses = ['active', 'paused', 'closed']
+
+	if parent_id:
+		parent_ids = [parent_id]
+	else:
+		sql = "SELECT employer_id FROM employer ORDER BY RAND() LIMIT " + str(int(math.ceil(limit / 10)))	
+		cursor.execute(sql)		
+		data = cursor.fetchall()
+		parent_ids = [item for t in data for item in t] 
+
+	sql = """
+		INSERT INTO job (employer_id, name, status) VALUES (%s, %s, %s)
+	"""
+
+	values = []
+	for i in range(0, 1000):
+		row = (random.choice(parent_ids), fake.job(), random.choice(statuses))
+		values.append(row)
+
+	cursor.executemany(sql, values)
+	db.commit()
+	db.close()
+
+
+
+def application(parent_id, limit):
+	fake = Faker()
+	db = pymysql.connect("localhost","root","","dradisdb" )
+	cursor = db.cursor()
+
+	if parent_id:
+		parent_ids = [parent_id]
+	else:
+		sql = "SELECT job_id FROM job ORDER BY RAND() LIMIT " + str(int(math.ceil(limit / 100)))	
+		cursor.execute(sql)		
+		data = cursor.fetchall()
+		parent_ids = [item for t in data for item in t] 
+
+	sql = """
+			INSERT INTO application (job_id, name, explainer_score, sq_score, created_at) VALUES (%s, %s, %s, %s, %s)
+	   """
+
+	values = []
+	for i in range(0, limit):
+		date = datetime.datetime.strptime('{} {}'.format(random.randint(1, 366), 2020), '%j %Y').isoformat()
+		row = (random.choice(parent_ids), fake.name(), random.randrange(3000), random.randrange(9000), date)
+		values.append(row)
+
+	cursor.executemany(sql, values)
+	db.commit()
+	db.close()
+
+
+
+if __name__ == "__main__":
+	start()
