@@ -5,7 +5,6 @@ import math
 import random
 import datetime
 import time
-import threading
 
 from faker import Faker
 from faker.providers import company
@@ -58,43 +57,28 @@ def start():
 
 
 	start_time = time.time()
-	threads = []
 
 	if(table == "employer"):
-		loops = int(math.ceil(limit / 1000))
-		for loop in range(0, loops):
-			t = threading.Thread(target=employer_thread)
-			t.start()
-			threads.append(t)
-
+		employer(parent_id, limit)
 	elif(table == "job"):
-		loops = int(math.ceil(limit / 1000))
-		for loop in range(0, loops):
-			threading.Thread(target=job_thread, args=(parent_id)).start()
-
-
+		job(parent_id, limit)
 	elif(table == "application"):
 		application(parent_id, limit)
-
-
-	for t in threads:
-	  t.join() # Wait until thread terminates its task
 
 	print("--- %s seconds ---" % (time.time() - start_time))
 
 
-
-def employer_thread():
+def employer(parent_id, limit):
 	fake = Faker()
 	db = pymysql.connect("localhost","root","","dradisdb" )
 	cursor = db.cursor()
 
 	sql = """
-		INSERT INTO employer (name) VALUES (%s)
-	"""
+			INSERT INTO employer (name) VALUES (%s)
+	   """
 
 	values = []
-	for i in range(0, 1000):
+	for i in range(0, limit):
 		values.append((fake.company()))
 
 	cursor.executemany(sql, values)
@@ -102,7 +86,8 @@ def employer_thread():
 	db.close()
 
 
-def job_thread(parent_id):
+
+def job(parent_id, limit):
 	fake = Faker()
 	db = pymysql.connect("localhost","root","","dradisdb" )
 	cursor = db.cursor()
@@ -118,11 +103,11 @@ def job_thread(parent_id):
 		parent_ids = [item for t in data for item in t] 
 
 	sql = """
-		INSERT INTO job (employer_id, name, status) VALUES (%s, %s, %s)
-	"""
+			INSERT INTO job (employer_id, name, status) VALUES (%s, %s, %s)
+	   """
 
 	values = []
-	for i in range(0, 1000):
+	for i in range(0, limit):
 		row = (random.choice(parent_ids), fake.job(), random.choice(statuses))
 		values.append(row)
 
