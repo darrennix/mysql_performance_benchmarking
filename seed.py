@@ -15,6 +15,144 @@ def start():
 	db = pymysql.connect("localhost","root","","dradisdb" )
 	cursor = db.cursor()
 
+
+	print("\n\n--- Start timer")
+	start_time = time.time()
+	print("No sort")
+	cursor.execute("""
+		SELECT
+			*
+		FROM 
+			application
+		WHERE
+			job_id = 1001
+		LIMIT
+			50
+		""", )
+	data = cursor.fetchall()
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+
+	print("\n\n--- Start timer")
+	start_time = time.time()
+	print("Sort by id")
+	cursor.execute("""
+		SELECT
+			*
+		FROM 
+			application
+		WHERE
+			job_id = 1001
+		ORDER BY
+			application.application_id ASC
+		LIMIT
+			50
+		OFFSET
+			5000
+		""", )
+	data = cursor.fetchall()
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+
+
+	print("\n\n--- Start timer")
+	start_time = time.time()
+	print("Sort by explainer_score")
+	cursor.execute("""
+		SELECT
+			*
+		FROM 
+			application
+		WHERE
+			job_id = 1001
+		ORDER BY
+			application.explainer_score ASC
+		LIMIT
+			50
+		OFFSET
+			5000
+		""", )
+	data = cursor.fetchall()
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+
+	print("\n\n--- Start timer")
+	start_time = time.time()
+	print("Sort by application date")
+	cursor.execute("""
+		SELECT
+			*
+		FROM 
+			application
+		WHERE
+			job_id = 1001
+		ORDER BY
+			application.created_at ASC
+		LIMIT
+			50
+		OFFSET
+			5000
+		""", )
+	data = cursor.fetchall()
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+	print("\n\n--- Start timer")
+	start_time = time.time()
+	print("Sort by name")
+	cursor.execute("""
+		SELECT
+			*
+		FROM 
+			application, 
+            job 
+		WHERE
+			job.employer_id = 1
+			AND job.job_id = application.job_id
+		ORDER BY
+			application.name ASC
+		LIMIT
+			50
+		OFFSET
+			5000
+		""", )
+	data = cursor.fetchall()
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+
+	print("\n\n--- Start timer")
+	print("Multicolumn sort by created_at, explainer_score WHERE sq_score > 1000 ")
+	sql = """
+		SELECT
+			*
+		FROM 
+			application
+		WHERE
+			job_id = 1001
+			AND sq_score > 1000
+		ORDER BY
+			application.created_at, application.explainer_score
+		LIMIT
+			50
+		OFFSET
+			5000
+		"""
+	print(sql)
+	start_time = time.time()
+	cursor.execute(sql, )
+	data = cursor.fetchall()
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+
 	cursor.execute("SELECT count(employer_id)  FROM employer")
 	data = cursor.fetchone()
 	print("Employer rows: ", data)
@@ -28,7 +166,6 @@ def start():
 	data = cursor.fetchone()
 	print("Application rows: ", data)
 
-	start_time = time.time()
 
 	cursor.execute("SELECT count(job_id)  FROM job WHERE employer_id = 1")
 	data = cursor.fetchone()
@@ -51,112 +188,6 @@ def start():
 	""")
 	data = cursor.fetchone()
 	print("Job with most applications has applications count of: ", data[0], " and is ID: ", data[1])
-
-
-
-	print("\n\n--- Start timer")
-	print("No sort")
-	cursor.execute("""
-		SELECT
-			*
-		FROM 
-			application
-		WHERE
-			job_id = 1001
-		LIMIT
-			50
-		""", )
-	data = cursor.fetchall()
-	print("--- %s seconds ---" % (time.time() - start_time))
-
-
-	print("\n\n--- Start timer")
-	print("Sort by id")
-	cursor.execute("""
-		SELECT
-			*
-		FROM 
-			application
-		WHERE
-			job_id = 1001
-		ORDER BY
-			application.application_id ASC
-		LIMIT
-			50
-		OFFSET
-			500000
-		""", )
-	data = cursor.fetchall()
-	print("--- %s seconds ---" % (time.time() - start_time))
-
-
-
-
-
-	print("\n\n--- Start timer")
-	print("Sort by explainer_score")
-	cursor.execute("""
-		SELECT
-			*
-		FROM 
-			application
-		WHERE
-			job_id = 1001
-		ORDER BY
-			application.explainer_score ASC
-		LIMIT
-			50
-		OFFSET
-			500000
-		""", )
-	data = cursor.fetchall()
-	print("--- %s seconds ---" % (time.time() - start_time))
-
-
-
-
-	print("\n\n--- Start timer")
-	print("Sort by application date")
-	cursor.execute("""
-		SELECT
-			*
-		FROM 
-			application
-		WHERE
-			job_id = 1001
-		ORDER BY
-			application.created_at ASC
-		LIMIT
-			50
-		OFFSET
-			500000
-		""", )
-	data = cursor.fetchall()
-	print("--- %s seconds ---" % (time.time() - start_time))
-
-
-
-	print("\n\n--- Start timer")
-	print("Sort by name")
-	cursor.execute("""
-		SELECT
-			*
-		FROM 
-			application, 
-            job 
-		WHERE
-			job.employer_id = 1
-			AND job.job_id = application.job_id
-		ORDER BY
-			application.name ASC
-		LIMIT
-			50
-		OFFSET
-			500000
-		""", )
-	data = cursor.fetchall()
-	print("--- %s seconds ---" % (time.time() - start_time))
-
 
 
 

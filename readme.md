@@ -72,6 +72,13 @@ CREATE TABLE application (
     PRIMARY KEY(application_id, job_id)
 );
 
+ALTER TABLE application ADD INDEX (job_id, application_id);
+ALTER TABLE application ADD INDEX (job_id, name);
+ALTER TABLE application ADD INDEX (job_id, explainer_score);
+ALTER TABLE application ADD INDEX (job_id, sq_score);
+ALTER TABLE application ADD INDEX (job_id, created_at);
+ALTER TABLE application ADD INDEX (job_id,  created_at, explainer_score, sq_score);
+
 
 ALTER TABLE application
     PARTITION BY KEY(job_id)
