@@ -15,21 +15,31 @@ def start():
 	db = pymysql.connect("localhost","root","","dradisdb" )
 	cursor = db.cursor()
 
-	print("Employer rows:")
 	cursor.execute("SELECT count(employer_id)  FROM employer")
 	data = cursor.fetchone()
-	print (data)
+	print("Employer rows: ", data)
 
 
-	print("Job rows:")
 	cursor.execute("SELECT count(job_id)  FROM job")
 	data = cursor.fetchone()
-	print (data)
+	print("Job rows: ", data)
 
-	print("Application rows:")
 	cursor.execute("SELECT count(application_id) FROM application")
 	data = cursor.fetchone()
-	print (data)
+	print("Application rows: ", data)
+
+	start_time = time.time()
+	print("--- Start timer")
+
+	cursor.execute("SELECT count(job_id)  FROM job WHERE employer_id = 1")
+	data = cursor.fetchone()
+	print("Jobs for employer_id = 1: ", data)
+
+	cursor.execute("SELECT count(application_id) FROM job, application WHERE job.employer_id = 1 AND job.job_id = application.job_id")
+	data = cursor.fetchone()
+	print("Applications for employer_id = 1: ", data)
+
+	print("--- %s seconds ---" % (time.time() - start_time))
 
 	# disconnect from server
 	db.close()
@@ -41,14 +51,14 @@ def start():
 		exit()
 	print(table)
 
-	parent_id = input("Do you want to seed all records for one employer or job ID? Enter parent ID or leave blank: ")
+	parent_id = input("Do you want to seed all records for one employer? Enter employer ID or leave blank: ")
 	if parent_id != "":
 		parent_id = int(parent_id)
 	else:
 		parent_id = None
 	print(parent_id)
 
-	limit = input("How many records to insert (default 10K): ")
+	limit = input("How many records to insert (expect 20 seconds per 100K): ")
 	if limit != "":
 		limit = int(limit)
 	else:
@@ -123,7 +133,11 @@ def application(parent_id, limit):
 	cursor = db.cursor()
 
 	if parent_id:
-		parent_ids = [parent_id]
+		sql = "SELECT job_id FROM job WHERE employer_id = %s LIMIT 1"
+		cursor.execute(sql, parent_id)		
+		data = cursor.fetchone()
+
+		parent_ids = [data[0]]
 	else:
 		sql = "SELECT job_id FROM job ORDER BY RAND() LIMIT " + str(int(math.ceil(limit / 100)))	
 		cursor.execute(sql)		
