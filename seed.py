@@ -29,7 +29,6 @@ def start():
 	print("Application rows: ", data)
 
 	start_time = time.time()
-	print("--- Start timer")
 
 	cursor.execute("SELECT count(job_id)  FROM job WHERE employer_id = 1")
 	data = cursor.fetchone()
@@ -39,13 +38,133 @@ def start():
 	data = cursor.fetchone()
 	print("Applications for employer_id = 1: ", data)
 
+
+	cursor.execute("""
+		select count(application_id) as counter, 
+		application.job_id 
+		from application, job 
+		where job.employer_id = 1
+        AND job.job_id = application.job_id
+		group by application.job_id
+		order by counter desc
+		limit 1
+	""")
+	data = cursor.fetchone()
+	print("Job with most applications has applications count of: ", data[0], " and is ID: ", data[1])
+
+
+
+	print("\n\n--- Start timer")
+	print("No sort")
+	cursor.execute("""
+		SELECT
+			*
+		FROM 
+			application
+		WHERE
+			job_id = 1001
+		LIMIT
+			50
+		""", )
+	data = cursor.fetchall()
 	print("--- %s seconds ---" % (time.time() - start_time))
+
+
+	print("\n\n--- Start timer")
+	print("Sort by id")
+	cursor.execute("""
+		SELECT
+			*
+		FROM 
+			application
+		WHERE
+			job_id = 1001
+		ORDER BY
+			application.application_id ASC
+		LIMIT
+			50
+		OFFSET
+			500000
+		""", )
+	data = cursor.fetchall()
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+
+
+	print("\n\n--- Start timer")
+	print("Sort by explainer_score")
+	cursor.execute("""
+		SELECT
+			*
+		FROM 
+			application
+		WHERE
+			job_id = 1001
+		ORDER BY
+			application.explainer_score ASC
+		LIMIT
+			50
+		OFFSET
+			500000
+		""", )
+	data = cursor.fetchall()
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+
+	print("\n\n--- Start timer")
+	print("Sort by application date")
+	cursor.execute("""
+		SELECT
+			*
+		FROM 
+			application
+		WHERE
+			job_id = 1001
+		ORDER BY
+			application.created_at ASC
+		LIMIT
+			50
+		OFFSET
+			500000
+		""", )
+	data = cursor.fetchall()
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+	print("\n\n--- Start timer")
+	print("Sort by name")
+	cursor.execute("""
+		SELECT
+			*
+		FROM 
+			application, 
+            job 
+		WHERE
+			job.employer_id = 1
+			AND job.job_id = application.job_id
+		ORDER BY
+			application.name ASC
+		LIMIT
+			50
+		OFFSET
+			500000
+		""", )
+	data = cursor.fetchall()
+	print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
 
 	# disconnect from server
 	db.close()
 
 
-	table = input("Which table do you want to seed (employer, job, application): ")
+	table = input("\n\n\nWhich table do you want to seed (employer, job, application): ")
 	if table not in ["employer", "job", "application"]:
 		print("Invalid input")
 		exit()
