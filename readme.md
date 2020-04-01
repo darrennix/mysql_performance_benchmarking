@@ -1,7 +1,57 @@
 Question: 
 Would an API that directly queries the MySQL DradisDB to power client-side views like Jobs List, Candidate List, Candidate View be performant at Indeed scale?
 
-Size
+Current size of DradisDB (bloodmoon):
+
+select count(*) from tblATS_advertiser; 
+31,959,347
+
+
+select max(ats_job_id) from tblATS_job;
+192602
+
+select distinct(advertiser_id) from tblATS_job_candidate_app_info 
+where 
+    candidate_id > 500000
+limit 5
+
+'5947263'
+'1523942'
+'1652394'
+'4136472'
+'1880457'
+
+
+
+select * from tblATS_advertiser where advertiser_id IN (
+'5947263',
+'1523942',
+'1652394',
+'4136472',
+'1880457'
+)
+'5947263','Indeed Hire Master Account','3602220','1284039992712426','2018-04-24 11:12:51','2018-04-24 11:12:51'
+'4136472','Loomis Armored US, LLC','4331550','2528037985032732','2018-04-24 11:12:51','2018-04-24 11:12:51'
+'1880457','SAS Retail Services','1470598','4129096952254760','2018-04-24 11:12:51','2018-04-24 11:12:51'
+'1652394','Hire Dynamics','1336481','5066053678531432','2018-04-24 11:12:51','2018-04-24 11:12:51'
+'1523942','Amazon WFS - ITA','1201856','471257877961397','2018-04-24 11:12:51','2020-01-14 18:14:56'
+
+
+# Hire
+
+select max(ats_job_id) from tblATS_job where advertiser_id IN (
+'5947263'
+)
+124049
+
+select max(candidate_id) from tblATS_job_candidate_app_info where advertiser_id IN (
+'5947263'
+)
+9,380,836
+
+
+
+Benchmark DB Size
 - Millions of employers
 - 10s of millions of jobs
 - Billions of applications
@@ -28,62 +78,6 @@ pip3 install pymysql
 pip3 install faker
 
 mysql -uroot 
-
-CREATE DATABASE dradisdb;
-USE dradisdb;
-
-DROP TABLE IF EXISTS employer;
-CREATE TABLE employer (
-    employer_id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(200)    
-);
-
-DROP TABLE IF EXISTS job;
-CREATE TABLE job (
-    job_id INT(11) UNSIGNED AUTO_INCREMENT,
-    employer_id INT(10) UNSIGNED,
-    status CHAR(6),
-    name VARCHAR(200),
-    INDEX (job_id),
-    INDEX (employer_id),
-    INDEX (status),
-    PRIMARY KEY(job_id, employer_id)
-);
-
-ALTER TABLE job
-    PARTITION BY KEY(employer_id)
-    PARTITIONS 10;
-
-
-DROP TABLE IF EXISTS application;
-CREATE TABLE application (
-    application_id INT(12) UNSIGNED AUTO_INCREMENT,
-    job_id INT(11) UNSIGNED,
-    name VARCHAR(200),
-    explainer_score INT(4) UNSIGNED,
-    sq_score INT(4) UNSIGNED,
-    created_at DATE,
-    INDEX (application_id), 
-    INDEX (job_id), 
-    INDEX (name), 
-    INDEX (explainer_score), 
-    INDEX (sq_score), 
-    INDEX (created_at) ,
-    PRIMARY KEY(application_id, job_id)
-);
-
-ALTER TABLE application ADD INDEX (job_id, application_id);
-ALTER TABLE application ADD INDEX (job_id, name);
-ALTER TABLE application ADD INDEX (job_id, explainer_score);
-ALTER TABLE application ADD INDEX (job_id, sq_score);
-ALTER TABLE application ADD INDEX (job_id, created_at);
-ALTER TABLE application ADD INDEX (job_id,  created_at, explainer_score, sq_score);
-
-
-ALTER TABLE application
-    PARTITION BY KEY(job_id)
-    PARTITIONS 1000;
-
-quit;
 ```
 
+run create.sql
