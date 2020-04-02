@@ -129,8 +129,6 @@ CREATE INDEX idx3 ON tblATS_job_candidate (advertiser_id, ats_job_id, explainer_
 CREATE INDEX idx4 ON tblATS_job_candidate (advertiser_id, ats_job_id, screener_question_score);
 CREATE INDEX idx5 ON tblATS_job_candidate (advertiser_id, ats_job_id, candidate_id);
 
-drop INDEX idx6 ON tblATS_job_candidate;
-drop INDEX idx7 ON tblATS_job_candidate;
-CREATE INDEX idx8 ON tblATS_job_candidate (advertiser_id, ats_job_id, candidate_id, explainer_score);
-CREATE INDEX idx9 ON tblATS_job_candidate (advertiser_id, name);
+CREATE INDEX idx6 ON tblATS_job_candidate (advertiser_id, ats_job_id, candidate_id, explainer_score);
+CREATE INDEX idx7 ON tblATS_job_candidate (advertiser_id, name);
 
