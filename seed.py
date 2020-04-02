@@ -12,37 +12,6 @@ from faker.providers import job
 
 
 def start():
-	# meta()
-
-	db = pymysql.connect("localhost","root","","dradisdb" )
-	cursor = db.cursor()
-
-	cursor.execute("SELECT count(*)  FROM tblATS_advertiser")
-	data = cursor.fetchone()
-	print("tblATS_advertiser rows: ", data)
-
-
-	cursor.execute("SELECT count(*)  FROM tblATS_job")
-	data = cursor.fetchone()
-	print("tblATS_job rows: ", data)
-
-	cursor.execute("SELECT count(*) FROM tblATS_job_candidate")
-	data = cursor.fetchone()
-	print("tblATS_job_candidate rows: ", data)
-
-
-	cursor.execute("SELECT count(*)  FROM tblATS_job WHERE advertiser_id = 1")
-	data = cursor.fetchone()
-	print("Jobs for advertiser_id = 1: ", data)
-
-	cursor.execute("SELECT count(*) FROM tblATS_job_candidate WHERE advertiser_id = 1 and ats_job_id = 1")
-	data = cursor.fetchone()
-	print("tblATS_job_candidates for advertiser_id = 1 and ats_job_id = 1 ", data)
-
-	# disconnect from server
-	db.close()
-
-
 	table = input("\n\n\nWhich table do you want to seed (advertiser, job, candidate): ")
 	if table not in ["advertiser", "job", "candidate"]:
 		print("Invalid input")
@@ -134,7 +103,9 @@ def job(advertiser_id, limit):
 
 
 	sql = """
-			INSERT INTO tblATS_job (advertiser_id, ats_job_id, job_group_id, title, company, country, description, status, account_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+			INSERT INTO tblATS_job 
+			(advertiser_id, ats_job_id, job_group_id, title, company, country, description, status, account_id) 
+			VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
 	   """
 
 	values = []
@@ -182,7 +153,9 @@ def candidate(advertiser_id, ats_job_id, limit):
 
 
 	sql = """
-		INSERT INTO tblATS_job_candidate (advertiser_id, ats_job_id, candidate_id, source, name, last_job_title, explainer_score, screener_question_score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+		INSERT INTO tblATS_job_candidate 
+		(advertiser_id, ats_job_id, candidate_id, source, name, last_job_title, explainer_score, screener_question_score, date_created) 
+		VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
 	"""
 
 
@@ -191,6 +164,7 @@ def candidate(advertiser_id, ats_job_id, limit):
 		row = random.choice(jobs)
 		advertiser_id = row[0]
 		ats_job_id = row[1]
+		date_created = datetime.datetime.strptime('{} {}'.format(random.randint(1, 366), 2020), '%j %Y').isoformat()
 
 		key = "-".join([str(advertiser_id), str(ats_job_id)])
 
@@ -198,154 +172,12 @@ def candidate(advertiser_id, ats_job_id, limit):
 		candidate_id = autoincrement[key]
 
 		source = random.choice(['MANUAL','RESUME_IMPORT','LINKED_IN_IMPORT','INDEED_APPLY'])
-		row = (advertiser_id, ats_job_id, candidate_id, source, fake.name(), fake.job(), random.randrange(3000), random.randrange(99))
+		row = (advertiser_id, ats_job_id, candidate_id, source, fake.name(), fake.job(), random.randrange(3000), random.randrange(99), date_created)
 		values.append(row)
 
 	cursor.executemany(sql, values)
 	db.commit()
 	db.close()
-
-
-def meta():
-	db = pymysql.connect("localhost","root","","dradisdb" )
-	cursor = db.cursor()
-
-	print("\n\n--- Start timer")
-	start_time = time.time()
-	print("No sort")
-	cursor.execute("""
-		SELECT
-			*
-		FROM 
-			tblATS_job_candidate
-		WHERE
-			job_id = 1001
-		LIMIT
-			50
-		""", )
-	data = cursor.fetchall()
-	print("--- %s seconds ---" % (time.time() - start_time))
-
-
-	print("\n\n--- Start timer")
-	start_time = time.time()
-	print("Sort by id")
-	cursor.execute("""
-		SELECT
-			*
-		FROM 
-			tblATS_job_candidate
-		WHERE
-			job_id = 1001
-		ORDER BY
-			tblATS_job_candidate.tblATS_job_candidate_id ASC
-		LIMIT
-			50
-		OFFSET
-			5000
-		""", )
-	data = cursor.fetchall()
-	print("--- %s seconds ---" % (time.time() - start_time))
-
-
-
-
-
-	print("\n\n--- Start timer")
-	start_time = time.time()
-	print("Sort by explainer_score")
-	cursor.execute("""
-		SELECT
-			*
-		FROM 
-			tblATS_job_candidate
-		WHERE
-			job_id = 1001
-		ORDER BY
-			tblATS_job_candidate.explainer_score ASC
-		LIMIT
-			50
-		OFFSET
-			5000
-		""", )
-	data = cursor.fetchall()
-	print("--- %s seconds ---" % (time.time() - start_time))
-
-
-
-
-	print("\n\n--- Start timer")
-	start_time = time.time()
-	print("Sort by tblATS_job_candidate date")
-	cursor.execute("""
-		SELECT
-			*
-		FROM 
-			tblATS_job_candidate
-		WHERE
-			job_id = 1001
-		ORDER BY
-			tblATS_job_candidate.created_at ASC
-		LIMIT
-			50
-		OFFSET
-			5000
-		""", )
-	data = cursor.fetchall()
-	print("--- %s seconds ---" % (time.time() - start_time))
-
-
-
-	print("\n\n--- Start timer")
-	start_time = time.time()
-	print("Sort by name")
-	cursor.execute("""
-		SELECT
-			*
-		FROM 
-			tblATS_job_candidate, 
-            job 
-		WHERE
-			job.advertiser_id = 1
-			AND job.job_id = tblATS_job_candidate.job_id
-		ORDER BY
-			tblATS_job_candidate.name ASC
-		LIMIT
-			50
-		OFFSET
-			5000
-		""", )
-	data = cursor.fetchall()
-	print("--- %s seconds ---" % (time.time() - start_time))
-
-
-
-
-	print("\n\n--- Start timer")
-	print("Multicolumn sort by created_at, explainer_score WHERE sq_score > 1000 ")
-	sql = """
-		SELECT
-			*
-		FROM 
-			tblATS_job_candidate
-		WHERE
-			job_id = 1001
-			AND sq_score > 1000
-		ORDER BY
-			tblATS_job_candidate.created_at, tblATS_job_candidate.explainer_score
-		LIMIT
-			50
-		OFFSET
-			5000
-		"""
-	print(sql)
-	start_time = time.time()
-	cursor.execute(sql, )
-	data = cursor.fetchall()
-	print("--- %s seconds ---" % (time.time() - start_time))
-
-
-
 
 
 if __name__ == "__main__":

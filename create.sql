@@ -19,11 +19,6 @@ CREATE TABLE `tblATS_advertiser` (
   KEY `last_modified_idx` (`last_modified`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Information about Advertisers.';
 
-ALTER TABLE tblATS_advertiser
-    PARTITION BY KEY(advertiser_id)
-    PARTITIONS 10;
-
-
 
 
 -- 
@@ -62,13 +57,6 @@ CREATE TABLE `tblATS_job` (
   KEY `last_modified` (`last_modified`),
   KEY `idx_date_created` (`date_created`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Main job table.';
-
-
-ALTER TABLE tblATS_job
-    PARTITION BY KEY(`advertiser_id`,`ats_job_id`)
-    PARTITIONS 100;
-
-
 
 
 -- 
@@ -115,13 +103,34 @@ CREATE TABLE `tblATS_job_candidate` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPRESSED KEY_BLOCK_SIZE=8 COMMENT='temporary key for migration';
 
 
+ALTER TABLE tblATS_advertiser
+    PARTITION BY KEY(advertiser_id)
+    PARTITIONS 10;
+
+
+ALTER TABLE tblATS_job
+    PARTITION BY KEY(`advertiser_id`,`ats_job_id`)
+    PARTITIONS 100;
+
+
 ALTER TABLE tblATS_job_candidate
     PARTITION BY KEY(`advertiser_id`,`ats_job_id`)
     PARTITIONS 1000;
 
 
-
 ALTER TABLE tblATS_job_candidate
-ADD COLUMN  explainer_score int(5),
-ADD COLUMN  screener_question_score int(2)
+  ADD COLUMN  explainer_score int(5),
+  ADD COLUMN  screener_question_score int(2)
 ;
+
+CREATE INDEX idx1 ON tblATS_job_candidate (advertiser_id, ats_job_id, name);
+CREATE INDEX idx2 ON tblATS_job_candidate (advertiser_id, ats_job_id, date_created);
+CREATE INDEX idx3 ON tblATS_job_candidate (advertiser_id, ats_job_id, explainer_score);
+CREATE INDEX idx4 ON tblATS_job_candidate (advertiser_id, ats_job_id, screener_question_score);
+CREATE INDEX idx5 ON tblATS_job_candidate (advertiser_id, ats_job_id, candidate_id);
+
+drop INDEX idx6 ON tblATS_job_candidate;
+drop INDEX idx7 ON tblATS_job_candidate;
+CREATE INDEX idx8 ON tblATS_job_candidate (advertiser_id, ats_job_id, candidate_id, explainer_score);
+CREATE INDEX idx9 ON tblATS_job_candidate (advertiser_id, name);
+
